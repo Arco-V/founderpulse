@@ -10,10 +10,10 @@ import { RetroPage } from './components/pages/RetroPage';
 import { HistoryPage } from './components/pages/HistoryPage';
 
 const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard },
-  { id: 'feedback',  label: 'Feedback',   icon: MessageSquare },
   { id: 'tasks',     label: 'Tareas',     icon: CheckSquare },
   { id: 'retro',     label: 'Retro',      icon: RotateCcw },
+  { id: 'feedback',  label: 'Feedback',   icon: MessageSquare },
+  { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard },
   { id: 'history',   label: 'Historial',  icon: History },
 ];
 
@@ -86,7 +86,7 @@ function Header({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (t:
 }
 
 function AppInner() {
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabId>('tasks');
   const { loading } = useStore();
 
   if (loading) {

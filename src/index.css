@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #F7F6F3;
+  }
+  body {
+    @apply text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+  }
+  .btn-primary {
+    @apply bg-cobalt-700 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-cobalt-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-700 text-sm font-medium rounded-lg px-4 py-2 hover:bg-gray-200 transition-colors;
+  }
+  .btn-danger {
+    @apply bg-coral-500 text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-coral-600 transition-colors;
+  }
+  .input {
+    @apply w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:border-transparent transition-shadow;
+  }
+  .badge-kudos {
+    @apply inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full px-2.5 py-0.5;
+  }
+  .badge-delta {
+    @apply inline-flex items-center gap-1 bg-coral-50 text-coral-600 text-xs font-medium rounded-full px-2.5 py-0.5;
+  }
+  .tab-active {
+    @apply text-cobalt-700 border-b-2 border-cobalt-700 font-semibold;
+  }
+  .tab-inactive {
+    @apply text-gray-500 hover:text-gray-800 border-b-2 border-transparent font-medium;
+  }
+}

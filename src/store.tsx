@@ -157,12 +157,18 @@ function mapValidationToDb(v: TaskValidation): Row {
   return { by_id: v.byId, approved: v.approved, comment: v.comment, at: v.at };
 }
 
+const VALID_IDS = new Set(['luli', 'martin', 'sofi', 'valen']);
+
 function mapTaskFromDb(row: Row): Task {
+  const raw = row.assigned_to;
+  const rawArr: string[] = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+  const assignedTo = rawArr.filter(id => VALID_IDS.has(id)) as FounderId[];
+
   return {
     id: row.id,
     title: row.title,
     description: row.description ?? '',
-    assignedTo: Array.isArray(row.assigned_to) ? row.assigned_to : [row.assigned_to],
+    assignedTo: assignedTo.length > 0 ? assignedTo : ['valen'],
     status: row.status,
     sprintWeek: row.sprint_week,
     createdAt: row.created_at,

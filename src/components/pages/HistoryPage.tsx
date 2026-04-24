@@ -53,7 +53,7 @@ function SprintSummary({ week }: { week: string }) {
                 const info = FOUNDERS[id];
                 const score = getRadarForFounder(id, state.feedback, week);
                 const fbReceived = weekFb.filter(f => f.toId === id);
-                const tasksAssigned = weekTasks.filter(t => t.assignedTo === id);
+                const tasksAssigned = weekTasks.filter(t => t.assignedTo.includes(id));
                 return (
                   <div key={id} className="text-center">
                     <div
@@ -116,11 +116,16 @@ function SprintSummary({ week }: { week: string }) {
                 {weekTasks.map(t => (
                   <div key={t.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded text-xs font-bold flex items-center justify-center text-white shrink-0"
-                        style={{ backgroundColor: FOUNDERS[t.assignedTo].color }}
-                      >
-                        {FOUNDERS[t.assignedTo].initial}
+                      <div className="flex -space-x-1 shrink-0">
+                        {t.assignedTo.map(id => (
+                          <div
+                            key={id}
+                            className="w-4 h-4 rounded text-xs font-bold flex items-center justify-center text-white ring-1 ring-white"
+                            style={{ backgroundColor: FOUNDERS[id].color }}
+                          >
+                            {FOUNDERS[id].initial}
+                          </div>
+                        ))}
                       </div>
                       <span className="text-sm text-gray-700">{t.title}</span>
                     </div>

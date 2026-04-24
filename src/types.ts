@@ -66,7 +66,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  assignedTo: FounderId;
+  assignedTo: FounderId[];
   status: TaskStatus;
   sprintWeek: string;
   createdAt: string;

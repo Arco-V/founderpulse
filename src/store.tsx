@@ -149,7 +149,7 @@ function mapTaskFromDb(row: Row): Task {
     id: row.id,
     title: row.title,
     description: row.description ?? '',
-    assignedTo: row.assigned_to,
+    assignedTo: Array.isArray(row.assigned_to) ? row.assigned_to : [row.assigned_to],
     status: row.status,
     sprintWeek: row.sprint_week,
     createdAt: row.created_at,

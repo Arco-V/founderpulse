@@ -1,30 +1,58 @@
 import { useState } from 'react';
-import { Plus, CheckCircle2, XCircle, ChevronDown, User } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, ChevronDown } from 'lucide-react';
 import { useStore } from '../../store';
 import {
   FOUNDERS, FOUNDER_IDS, FounderId, Task, TaskStatus,
   TASK_STATUS_LABELS, TASK_STATUS_COLORS
 } from '../../types';
-import { getCurrentWeek, genId, formatDate } from '../../lib/utils';
+import { getCurrentWeek, genId } from '../../lib/utils';
 
 const STATUS_ORDER: TaskStatus[] = ['pending', 'in-progress', 'completed', 'needs-revision'];
 
 const COLUMN_STYLES: Record<TaskStatus, { header: string; dot: string }> = {
-  'pending':        { header: 'text-gray-500', dot: 'bg-gray-400' },
-  'in-progress':    { header: 'text-cobalt-700', dot: 'bg-cobalt-600' },
+  'pending':        { header: 'text-gray-500',    dot: 'bg-gray-400' },
+  'in-progress':    { header: 'text-cobalt-700',  dot: 'bg-cobalt-600' },
   'completed':      { header: 'text-emerald-700', dot: 'bg-emerald-500' },
-  'needs-revision': { header: 'text-coral-600', dot: 'bg-coral-400' },
+  'needs-revision': { header: 'text-coral-600',   dot: 'bg-coral-400' },
 };
+
+function AssigneeAvatars({ ids, size = 6 }: { ids: FounderId[]; size?: number }) {
+  return (
+    <div className="flex -space-x-1">
+      {ids.map(id => {
+        const info = FOUNDERS[id];
+        return (
+          <div
+            key={id}
+            title={info.name}
+            className={`w-${size} h-${size} rounded-md text-xs font-bold flex items-center justify-center text-white ring-2 ring-white shrink-0`}
+            style={{ backgroundColor: info.color }}
+          >
+            {info.initial}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function AddTaskModal({ onClose }: { onClose: () => void }) {
   const { state, dispatch } = useStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [assignedTo, setAssignedTo] = useState<FounderId>(state.currentUser);
+  const [assignedTo, setAssignedTo] = useState<FounderId[]>([state.currentUser]);
+
+  function toggleAssignee(id: FounderId) {
+    setAssignedTo(prev =>
+      prev.includes(id)
+        ? prev.length > 1 ? prev.filter(x => x !== id) : prev  // keep at least 1
+        : [...prev, id]
+    );
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || assignedTo.length === 0) return;
     const task: Task = {
       id: genId(),
       title: title.trim(),
@@ -49,13 +77,9 @@ function AddTaskModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Título</label>
             <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
+              type="text" value={title} onChange={e => setTitle(e.target.value)}
               placeholder="Ej: Armar deck para avance 6"
-              className="input mt-2"
-              autoFocus
-              required
+              className="input mt-2" autoFocus required
             />
           </div>
           <div>
@@ -63,49 +87,54 @@ function AddTaskModal({ onClose }: { onClose: () => void }) {
               Descripción / Definition of Done
             </label>
             <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
+              value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Ej: Incluir slide de problema, dolor, validaciones, solución y mercado"
-              rows={3}
-              className="input mt-2 resize-none"
+              rows={3} className="input mt-2 resize-none"
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Asignado a</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Asignado a{' '}
+              <span className="normal-case text-gray-400 font-normal">(seleccioná uno o varios)</span>
+            </label>
             <div className="flex gap-2 mt-2 flex-wrap">
               {FOUNDER_IDS.map(id => {
                 const info = FOUNDERS[id];
+                const selected = assignedTo.includes(id);
                 return (
                   <button
-                    key={id}
-                    type="button"
-                    onClick={() => setAssignedTo(id)}
+                    key={id} type="button" onClick={() => toggleAssignee(id)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all"
                     style={
-                      assignedTo === id
+                      selected
                         ? { backgroundColor: info.color, color: '#fff', borderColor: info.color }
                         : { backgroundColor: '#fff', color: '#374151', borderColor: '#E5E7EB' }
                     }
                   >
                     <span
                       className="w-4 h-4 rounded text-xs font-bold flex items-center justify-center"
-                      style={{ backgroundColor: assignedTo === id ? 'rgba(255,255,255,0.25)' : info.bg, color: info.color }}
+                      style={{
+                        backgroundColor: selected ? 'rgba(255,255,255,0.25)' : info.bg,
+                        color: selected ? '#fff' : info.color,
+                      }}
                     >
                       {info.initial}
                     </span>
                     {info.name}
+                    {selected && <span className="text-white/70 text-xs">✓</span>}
                   </button>
                 );
               })}
             </div>
+            {assignedTo.length > 1 && (
+              <p className="text-xs text-cobalt-600 mt-1.5">
+                {assignedTo.length} personas asignadas
+              </p>
+            )}
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1">
-              Cancelar
-            </button>
-            <button type="submit" className="btn-primary flex-1">
-              Crear tarea
-            </button>
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
+            <button type="submit" className="btn-primary flex-1">Crear tarea</button>
           </div>
         </form>
       </div>
@@ -119,7 +148,7 @@ function ValidationPanel({ task }: { task: Task }) {
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
 
-  if (task.assignedTo === state.currentUser) return null;
+  if (task.assignedTo.includes(state.currentUser)) return null;
   if (task.status !== 'completed' && task.status !== 'needs-revision') return null;
 
   function validate(approved: boolean) {
@@ -127,17 +156,10 @@ function ValidationPanel({ task }: { task: Task }) {
       type: 'ADD_VALIDATION',
       payload: {
         taskId: task.id,
-        validation: {
-          byId: state.currentUser,
-          approved,
-          comment: comment.trim(),
-          at: new Date().toISOString(),
-        },
+        validation: { byId: state.currentUser, approved, comment: comment.trim(), at: new Date().toISOString() },
       },
     });
-    if (!approved) {
-      dispatch({ type: 'UPDATE_TASK_STATUS', payload: { id: task.id, status: 'needs-revision' } });
-    }
+    if (!approved) dispatch({ type: 'UPDATE_TASK_STATUS', payload: { id: task.id, status: 'needs-revision' } });
     setComment('');
     setOpen(false);
   }
@@ -160,11 +182,8 @@ function ValidationPanel({ task }: { task: Task }) {
           {open && (
             <div className="mt-2 space-y-2">
               <input
-                type="text"
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                placeholder="Comentario (opcional)"
-                className="input text-xs py-1"
+                type="text" value={comment} onChange={e => setComment(e.target.value)}
+                placeholder="Comentario (opcional)" className="input text-xs py-1"
               />
               <div className="flex gap-2">
                 <button
@@ -190,20 +209,14 @@ function ValidationPanel({ task }: { task: Task }) {
 
 function TaskCard({ task }: { task: Task }) {
   const { state, dispatch } = useStore();
-  const info = FOUNDERS[task.assignedTo];
-  const isOwner = task.assignedTo === state.currentUser;
+  const isOwner = task.assignedTo.includes(state.currentUser);
   const approvals = task.validations.filter(v => v.approved).length;
   const rejections = task.validations.filter(v => !v.approved).length;
 
   return (
     <div className="card p-3.5 space-y-2">
       <div className="flex items-start gap-2">
-        <div
-          className="w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center text-white shrink-0 mt-0.5"
-          style={{ backgroundColor: info.color }}
-        >
-          {info.initial}
-        </div>
+        <AssigneeAvatars ids={task.assignedTo} size={6} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 leading-snug">{task.title}</p>
           {task.description && (
@@ -232,14 +245,10 @@ function TaskCard({ task }: { task: Task }) {
       {(task.status === 'completed' || task.status === 'needs-revision') && (
         <div className="flex items-center gap-2 text-xs text-gray-400">
           {approvals > 0 && (
-            <span className="flex items-center gap-1 text-emerald-600">
-              <CheckCircle2 size={11} /> {approvals}
-            </span>
+            <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 size={11} /> {approvals}</span>
           )}
           {rejections > 0 && (
-            <span className="flex items-center gap-1 text-coral-500">
-              <XCircle size={11} /> {rejections}
-            </span>
+            <span className="flex items-center gap-1 text-coral-500"><XCircle size={11} /> {rejections}</span>
           )}
         </div>
       )}

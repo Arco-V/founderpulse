@@ -12,7 +12,7 @@ function FounderModal({ founderId, onClose }: { founderId: FounderId; onClose: (
   const score = getRadarForFounder(founderId, state.feedback, week);
 
   const fbList = state.feedback.filter(f => f.toId === founderId);
-  const taskList = state.tasks.filter(t => t.assignedTo === founderId);
+  const taskList = state.tasks.filter(t => t.assignedTo.includes(founderId));
   const kudos = fbList.filter(f => f.type === 'kudos' && f.sprintWeek === week);
   const deltas = fbList.filter(f => f.type === 'delta' && f.sprintWeek === week);
 
@@ -115,7 +115,7 @@ function FounderCard({ founderId, onOpen }: { founderId: FounderId; onOpen: () =
   const weekFb = state.feedback.filter(f => f.toId === founderId && f.sprintWeek === week);
   const kudosCount = weekFb.filter(f => f.type === 'kudos').length;
   const deltaCount = weekFb.filter(f => f.type === 'delta').length;
-  const weekTasks = state.tasks.filter(t => t.assignedTo === founderId && t.sprintWeek === week);
+  const weekTasks = state.tasks.filter(t => t.assignedTo.includes(founderId) && t.sprintWeek === week);
   const doneTasks = weekTasks.filter(t => t.status === 'completed').length;
 
   return (

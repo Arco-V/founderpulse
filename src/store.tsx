@@ -9,6 +9,8 @@ type Action =
   | { type: 'ADD_FEEDBACK'; payload: Feedback }
   | { type: 'DELETE_FEEDBACK'; payload: string }
   | { type: 'ADD_TASK'; payload: Task }
+  | { type: 'UPDATE_TASK'; payload: Task }
+  | { type: 'DELETE_TASK'; payload: string }
   | { type: 'UPDATE_TASK_STATUS'; payload: { id: string; status: TaskStatus } }
   | { type: 'ADD_VALIDATION'; payload: { taskId: string; validation: TaskValidation } }
   | { type: 'ADD_RETRO'; payload: GroupRetro }
@@ -19,6 +21,7 @@ type Action =
   | { type: '_RT_FEEDBACK_DELETE'; payload: string }
   | { type: '_RT_TASK_INSERT'; payload: Task }
   | { type: '_RT_TASK_UPDATE'; payload: Task }
+  | { type: '_RT_TASK_DELETE'; payload: string }
   | { type: '_RT_RETRO_UPSERT'; payload: GroupRetro };
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
@@ -48,6 +51,16 @@ function reducer(state: AppState, action: Action): AppState {
     case '_RT_TASK_INSERT':
       if (state.tasks.some(t => t.id === action.payload.id)) return state;
       return { ...state, tasks: [action.payload, ...state.tasks] };
+
+    case 'UPDATE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.map(t => t.id === action.payload.id ? action.payload : t),
+      };
+
+    case 'DELETE_TASK':
+    case '_RT_TASK_DELETE':
+      return { ...state, tasks: state.tasks.filter(t => t.id !== action.payload) };
 
     case 'UPDATE_TASK_STATUS':
       return {
@@ -247,6 +260,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tasks' },
         p => _dispatch({ type: '_RT_TASK_UPDATE', payload: mapTaskFromDb(p.new) })
       )
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'tasks' },
+        p => _dispatch({ type: '_RT_TASK_DELETE', payload: (p.old as Row).id })
+      )
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'retros' },
         p => _dispatch({ type: '_RT_RETRO_UPSERT', payload: mapRetroFromDb(p.new) })
       )
@@ -281,6 +297,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
         case 'ADD_TASK':
           await supabase.from('tasks').insert([mapTaskToDb(action.payload)]);
+          break;
+
+        case 'UPDATE_TASK':
+          await supabase
+            .from('tasks')
+            .update({
+              title: action.payload.title,
+              description: action.payload.description,
+              assigned_to: action.payload.assignedTo,
+              sprint_week: action.payload.sprintWeek,
+            })
+            .eq('id', action.payload.id);
+          break;
+
+        case 'DELETE_TASK':
+          await supabase.from('tasks').delete().eq('id', action.payload);
           break;
 
         case 'UPDATE_TASK_STATUS':

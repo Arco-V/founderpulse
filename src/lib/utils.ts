@@ -1,13 +1,27 @@
 import { Feedback, RadarScore, RADAR_AXES } from '../types';
 
-export function getCurrentWeek(): string {
-  const now = new Date();
-  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+function weekFromDate(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return `${d.getUTCFullYear()}-S${String(weekNo).padStart(2, '0')}`;
+}
+
+export function getCurrentWeek(): string {
+  return weekFromDate(new Date());
+}
+
+export function getRecentWeeks(n = 8): string[] {
+  const result: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i * 7);
+    const w = weekFromDate(d);
+    if (!result.includes(w)) result.push(w);
+  }
+  return result;
 }
 
 export function formatWeek(week: string): string {
@@ -33,9 +47,7 @@ export function getRadarForFounder(
   const relevant = feedback.filter(
     f => f.toId === founderId && f.sprintWeek === sprintWeek && f.radarScore
   );
-  if (relevant.length === 0) {
-    return { proactivity: 5, execution: 5, innovation: 5, ownership: 5 };
-  }
+  if (relevant.length === 0) return { proactivity: 5, execution: 5, innovation: 5, ownership: 5 };
   const result = {} as RadarScore;
   for (const ax of RADAR_AXES) {
     const vals = relevant.map(f => f.radarScore![ax.key]).filter(v => v > 0);
